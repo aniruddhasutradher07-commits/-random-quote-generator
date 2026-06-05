@@ -1,0 +1,22 @@
+{
+  "name": "Quote Generator",
+  "short_name": "QuoteApp",
+  "description": "Daily inspiration quotes app",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#e94560",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/e94560/ffffff?text=Q",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/e94560/ffffff?text=Q",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

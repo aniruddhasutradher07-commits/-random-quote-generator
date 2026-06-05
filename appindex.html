@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1a1a2e"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="QuoteApp"/>
+  <title>Quote Generator</title>
+  <link rel="manifest" href="manifest.json"/>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --card: rgba(255,255,255,0.07);
+      --text: #f0f0f0;
+      --accent: #e94560;
+      --muted: rgba(255,255,255,0.5);
+      --border: rgba(255,255,255,0.12);
+    }
+    .light {
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --accent: #e94560;
+      --muted: #888;
+      --border: rgba(0,0,0,0.1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .topbar h1 { font-size: 17px; font-weight: 600; }
+    .topbar-icons { display: flex; gap: 12px; }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--text);
+      padding: 4px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .icon-btn:active { background: var(--card); }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      gap: 24px;
+    }
+
+    /* CATEGORY PILLS */
+    .pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .pill {
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* CARD */
+    .quote-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      position: relative;
+    }
+    .quote-card.fade { opacity: 0; transform: scale(0.97); }
+
+    .quote-mark {
+      font-size: 56px;
+      line-height: 0.7;
+      color: var(--accent);
+      font-family: Georgia, serif;
+      opacity: 0.7;
+    }
+    .quote-text {
+      font-size: 19px;
+      line-height: 1.75;
+      font-style: italic;
+      font-family: Georgia, serif;
+      color: var(--text);
+    }
+    .quote-author {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .quote-category {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 50px;
+      background: var(--accent);
+      color: #fff;
+      opacity: 0.8;
+    }
+
+    /* FAVORITE BTN */
+    .fav-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .fav-btn:active { transform: scale(1.3); }
+
+    /* BUTTONS */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 480px;
+    }
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+    }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* COUNTER */
+    .counter {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* FAVORITES PANEL */
+    .fav-panel {
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .fav-panel.open { display: flex; }
+    .fav-panel h2 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+    .fav-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .fav-item p { color: var(--text); font-style: italic; }
+    .fav-item span { color: var(--accent); font-size: 12px; font-weight: 600; }
+    .remove-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .empty-msg {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #333;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 14px;
+      transition: transform 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <h1>✨ QuoteApp</h1>
+    <div class="topbar-icons">
+      <button class="icon-btn" onclick="toggleFav()" title="Favorites">❤️</button>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">🌙</button>
+    </div>
+  </div>
+
+  <!-- MAIN VIEW -->
+  <div class="main" id="mainView">
+
+    <!-- CATEGORY PILLS -->
+    <div class="pills">
+      <button class="pill active" onclick="setCategory('all', this)">All</button>
+      <button class="pill" onclick="setCategory('motivation', this)">Motivation</button>
+      <button class="pill" onclick="setCategory('life', this)">Life</button>
+      <button class="pill" onclick="setCategory('success', this)">Success</button>
+      <button class="pill" onclick="setCategory('wisdom', this)">Wisdom</button>
+    </div>
+
+    <!-- QUOTE CARD -->
+    <div class="quote-card" id="card">
+      <button class="fav-btn" onclick="toggleFavorite()" id="favBtn" title="Add to favorites">🤍</button>
+      <div class="quote-mark">"</div>
+      <p class="quote-text" id="quoteText">Loading...</p>
+      <p class="quote-author" id="quoteAuthor">...</p>
+      <span class="quote-category" id="quoteCat">...</span>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="shareQuote()">🔗 Share</button>
+      <button class="btn btn-primary" onclick="showQuote()">↻ New Quote</button>
+      <button class="btn btn-secondary" onclick="copyQuote()">📋 Copy</button>
+    </div>
+
+    <p class="counter" id="counter"></p>
+  </div>
+
+  <!-- FAVORITES PANEL -->
+  <div class="fav-panel" id="favPanel">
+    <h2>❤️ My Favorites</h2>
+    <div id="favList"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+<script>
+const quotes = [
+  // MOTIVATION (50 quotes)
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", cat: "motivation" },
+  { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt", cat: "motivation" },
+  { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown", cat: "motivation" },
+  { text: "Your limitation — it's only your imagination.", author: "Unknown", cat: "motivation" },
+  { text: "Great things never come from comfort zones.", author: "Unknown", cat: "motivation" },
+  { text: "Dream it. Wish it. Do it.", author: "Unknown", cat: "motivation" },
+  { text: "Success doesn't just find you. You have to go out and get it.", author: "Unknown", cat: "motivation" },
+  { text: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Unknown", cat: "motivation" },
+  { text: "Don't stop when you're tired. Stop when you're done.", author: "Unknown", cat: "motivation" },
+  { text: "Wake up with determination. Go to bed with satisfaction.", author: "Unknown", cat: "motivation" },
+  { text: "Do something today that your future self will thank you for.", author: "Unknown", cat: "motivation" },
+  { text: "Little things make big days.", author: "Unknown", cat: "motivation" },
+  { text: "It's going to be hard, but hard does not mean impossible.", author: "Unknown", cat: "motivation" },
+  { text: "Don't wait for opportunity. Create it.", author: "Unknown", cat: "motivation" },
+  { text: "Sometimes we're tested not to show our weaknesses, but to discover our strengths.", author: "Unknown", cat: "motivation" },
+  { text: "The key to success is to focus on goals, not obstacles.", author: "Unknown", cat: "motivation" },
+  { text: "Dream bigger. Do bigger.", author: "Unknown", cat: "motivation" },
+  { text: "You are stronger than you think.", author: "Unknown", cat: "motivation" },
+  { text: "Act as if what you do makes a difference. It does.", author: "William James", cat: "motivation" },
+  { text: "What you get by achieving your goals is not as important as what you become.", author: "Zig Ziglar", cat: "motivation" },
+  { text: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky", cat: "motivation" },
+  { text: "I am not a product of my circumstances. I am a product of my decisions.", author: "Stephen Covey", cat: "motivation" },
+  { text: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb", cat: "motivation" },
+  { text: "An unexamined life is not worth living.", author: "Socrates", cat: "motivation" },
+  { text: "Spread love everywhere you go.", author: "Mother Teresa", cat: "motivation" },
+  { text: "When you reach the end of your rope, tie a knot in it and hang on.", author: "Franklin D. Roosevelt", cat: "motivation" },
+  { text: "Always remember that you are absolutely unique.", author: "Margaret Mead", cat: "motivation" },
+  { text: "Don't judge each day by the harvest you reap but by the seeds that you plant.", author: "Robert Louis Stevenson", cat: "motivation" },
+  { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", cat: "motivation" },
+  { text: "Tell me and I forget. Teach me and I remember. Involve me and I learn.", author: "Benjamin Franklin", cat: "motivation" },
+  { text: "The best revenge is massive success.", author: "Frank Sinatra", cat: "motivation" },
+  { text: "People who are crazy enough to think they can change the world, are the ones who do.", author: "Rob Siltanen", cat: "motivation" },
+  { text: "Failure will never overtake me if my determination to succeed is strong enough.", author: "Og Mandino", cat: "motivation" },
+  { text: "Entrepreneurs are great at dealing with uncertainty and also very good at continuously running out of money.", author: "Unknown", cat: "motivation" },
+  { text: "We may encounter many defeats but we must not be defeated.", author: "Maya Angelou", cat: "motivation" },
+  { text: "Knowing is not enough; we must apply. Wishing is not enough; we must do.", author: "Johann Wolfgang Von Goethe", cat: "motivation" },
+  { text: "Imagine your life is perfect in every respect; what would it look like?", author: "Brian Tracy", cat: "motivation" },
+  { text: "We generate fears while we sit. We overcome them by action.", author: "Dr. Henry Link", cat: "motivation" },
+  { text: "Whether you think you can or think you can't, you're right.", author: "Henry Ford", cat: "motivation" },
+  { text: "Security is mostly a superstition. Life is either a daring adventure or nothing.", author: "Helen Keller", cat: "motivation" },
+  { text: "The man who has confidence in himself gains the confidence of others.", author: "Hasidic Proverb", cat: "motivation" },
+  { text: "The only real mistake is the one from which we learn nothing.", author: "Henry Ford", cat: "motivation" },
+  { text: "Certain things catch your eye, but pursue only those that capture the heart.", author: "Ancient Indian Proverb", cat: "motivation" },
+  { text: "Believe and act as if it were impossible to fail.", author: "Charles Kettering", cat: "motivation" },
+  { text: "I cannot give you the formula for success, but I can give you the formula for failure — try to please everybody.", author: "Herbert Bayard Swope", cat: "motivation" },
+  { text: "You become what you believe.", author: "Oprah Winfrey", cat: "motivation" },
+  { text: "The secret of getting ahead is getting started.", author: "Mark Twain", cat: "motivation" },
+  { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs", cat: "motivation" },
+  { text: "If you want to lift yourself up, lift up someone else.", author: "Booker T. Washington", cat: "motivation" },
+  { text: "I have been impressed with the urgency of doing. Knowing is not enough; we must apply.", author: "Leonardo da Vinci", cat: "motivation" },
+
+  // LIFE (50 quotes)
+  { text: "Life is what happens when you're busy making other plans.", author: "John Lennon", cat: "life" },
+  { text: "The purpose of our lives is to be happy.", author: "Dalai Lama", cat: "life" },
+  { text: "Get busy living or get busy dying.", author: "Stephen King", cat: "life" },
+  { text: "You only live once, but if you do it right, once is enough.", author: "Mae West", cat: "life" },
+  { text: "Life is short, smile while you still have teeth.", author: "Unknown", cat: "life" },
+  { text: "In three words I can sum up everything I've learned about life: it goes on.", author: "Robert Frost", cat: "life" },
+  { text: "Life is either a daring adventure or nothing at all.", author: "Helen Keller", cat: "life" },
+  { text: "Do not go where the path may lead, go instead where there is no path and leave a trail.", author: "Ralph Waldo Emerson", cat: "life" },
+  { text: "You will face many defeats in life, but never let yourself be defeated.", author: "Maya Angelou", cat: "life" },
+  { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela", cat: "life" },
+  { text: "In the end, it's not the years in your life that count. It's the life in your years.", author: "Abraham Lincoln", cat: "life" },
+  { text: "Never let the fear of striking out keep you from playing the game.", author: "Babe Ruth", cat: "life" },
+  { text: "Life is not measured by the number of breaths we take, but by the moments that take our breath away.", author: "Maya Angelou", cat: "life" },
+  { text: "If life were predictable it would cease to be life, and be without flavor.", author: "Eleanor Roosevelt", cat: "life" },
+  { text: "If you look at what you have in life, you'll always have more.", author: "Oprah Winfrey", cat: "life" },
+  { text: "If you want to live a happy life, tie it to a goal, not to people or things.", author: "Albert Einstein", cat: "life" },
+  { text: "Never let the fear of striking out keep you from playing the game.", author: "Babe Ruth", cat: "life" },
+  { text: "Money and success don't change people; they merely amplify what is already there.", author: "Will Smith", cat: "life" },
+  { text: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs", cat: "life" },
+  { text: "Not how long, but how well you have lived is the main thing.", author: "Seneca", cat: "life" },
+  { text: "It is not length of life, but depth of life.", author: "Ralph Waldo Emerson", cat: "life" },
+  { text: "Happiness is not something readymade. It comes from your own actions.", author: "Dalai Lama", cat: "life" },
+  { text: "If you're not making mistakes, then you're not doing anything.", author: "John Wooden", cat: "life" },
+  { text: "The big lesson in life is never be scared of anyone or anything.", author: "Frank Sinatra", cat: "life" },
+  { text: "Sing like no one's listening, love like you've never been hurt.", author: "Mark Twain", cat: "life" },
+  { text: "When one door of happiness closes, another opens.", author: "Helen Keller", cat: "life" },
+  { text: "Life is made of ever so many partings welded together.", author: "Charles Dickens", cat: "life" },
+  { text: "Challenges are what make life interesting and overcoming them is what makes life meaningful.", author: "Joshua J. Marine", cat: "life" },
+  { text: "If you want to live a happy life, tie it to a goal, not to people or objects.", author: "Albert Einstein", cat: "life" },
+  { text: "Nothing in life is to be feared, it is only to be understood.", author: "Marie Curie", cat: "life" },
+  { text: "I alone cannot change the world, but I can cast a stone across the water to create many ripples.", author: "Mother Teresa", cat: "life" },
+  { text: "What lies behind us and what lies before us are tiny matters compared to what lies within us.", author: "Ralph Waldo Emerson", cat: "life" },
+  { text: "You cannot find peace by avoiding life.", author: "Virginia Woolf", cat: "life" },
+  { text: "Life is really simple, but we insist on making it complicated.", author: "Confucius", cat: "life" },
+  { text: "Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.", author: "Buddha", cat: "life" },
+  { text: "Life is a succession of lessons which must be lived to be understood.", author: "Helen Keller", cat: "life" },
+  { text: "You can't connect the dots looking forward; you can only connect them looking backwards.", author: "Steve Jobs", cat: "life" },
+  { text: "Every moment is a fresh beginning.", author: "T.S. Eliot", cat: "life" },
+  { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius", cat: "life" },
+  { text: "Everything you've ever wanted is on the other side of fear.", author: "George Addair", cat: "life" },
+  { text: "We must be willing to let go of the life we planned so as to have the life that is waiting for us.", author: "Joseph Campbell", cat: "life" },
+  { text: "The good life is one inspired by love and guided by knowledge.", author: "Bertrand Russell", cat: "life" },
+  { text: "Live as if you were to die tomorrow. Learn as if you were to live forever.", author: "Mahatma Gandhi", cat: "life" },
+  { text: "Life is not about finding yourself. Life is about creating yourself.", author: "George Bernard Shaw", cat: "life" },
+  { text: "The healthiest response to life is joy.", author: "Deepak Chopra", cat: "life" },
+  { text: "Life is a journey, and if you fall in love with the journey, you will be in love forever.", author: "Peter Hagerty", cat: "life" },
+  { text: "Change your thoughts and you change your world.", author: "Norman Vincent Peale", cat: "life" },
+  { text: "Either write something worth reading or do something worth writing.", author: "Benjamin Franklin", cat: "life" },
+  { text: "A life spent making mistakes is not only more honorable, but more useful than a life spent doing nothing.", author: "George Bernard Shaw", cat: "life" },
+  { text: "You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose.", author: "Dr. Seuss", cat: "life" },
+
+  // SUCCESS (50 quotes)
+  { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill", cat: "success" },
+  { text: "Success usually comes to those who are too busy to be looking for it.", author: "Henry David Thoreau", cat: "success" },
+  { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson", cat: "success" },
+  { text: "The secret of success is to do the common thing uncommonly well.", author: "John D. Rockefeller", cat: "success" },
+  { text: "I find that the harder I work, the more luck I seem to have.", author: "Thomas Jefferson", cat: "success" },
+  { text: "Success is walking from failure to failure with no loss of enthusiasm.", author: "Winston Churchill", cat: "success" },
+  { text: "The successful warrior is the average man, with laser-like focus.", author: "Bruce Lee", cat: "success" },
+  { text: "There are no secrets to success. It is the result of preparation, hard work, and learning from failure.", author: "Colin Powell", cat: "success" },
+  { text: "Success is not the key to happiness. Happiness is the key to success.", author: "Albert Schweitzer", cat: "success" },
+  { text: "Coming together is a beginning, staying together is progress, and working together is success.", author: "Henry Ford", cat: "success" },
+  { text: "Try not to become a man of success. Rather become a man of value.", author: "Albert Einstein", cat: "success" },
+  { text: "It is better to fail in originality than to succeed in imitation.", author: "Herman Melville", cat: "success" },
+  { text: "The road to success and the road to failure are almost exactly the same.", author: "Colin R. Davis", cat: "success" },
+  { text: "Success usually comes to those who are too busy to be looking for it.", author: "Henry David Thoreau", cat: "success" },
+  { text: "Opportunities don't happen. You create them.", author: "Chris Grosser", cat: "success" },
+  { text: "Don't be afraid to give up the good to go for the great.", author: "John D. Rockefeller", cat: "success" },
+  { text: "I owe my success to having listened respectfully to the very best advice, and then going away and doing the exact opposite.", author: "G. K. Chesterton", cat: "success" },
+  { text: "Would you like me to give you a formula for success? It's quite simple, really: Double your rate of failure.", author: "Thomas J. Watson", cat: "success" },
+  { text: "If you are not willing to risk the usual, you will have to settle for the ordinary.", author: "Jim Rohn", cat: "success" },
+  { text: "The ones who are crazy enough to think that they can change the world, are the ones who do.", author: "Steve Jobs", cat: "success" },
+  { text: "Do one thing every day that scares you.", author: "Eleanor Roosevelt", cat: "success" },
+  { text: "All our dreams can come true, if we have the courage to pursue them.", author: "Walt Disney", cat: "success" },
+  { text: "Good, better, best. Never let it rest. Until your good is better and your better is best.", author: "St. Jerome", cat: "success" },
+  { text: "I find that when you have a real interest in life and a curious life, that sleep is not the most important thing.", author: "Martha Stewart", cat: "success" },
+  { text: "It's not whether you get knocked down, it's whether you get up.", author: "Vince Lombardi", cat: "success" },
+  { text: "If you genuinely want something, don't wait for it — teach yourself to be impatient.", author: "Gurbaksh Chahal", cat: "success" },
+  { text: "If you don't value your time, neither will others. Stop giving away your time and talents.", author: "Kim Garst", cat: "success" },
+  { text: "When you stop chasing the wrong things, you give the right things a chance to catch you.", author: "Lolly Daskal", cat: "success" },
+  { text: "Don't let the fear of losing be greater than the excitement of winning.", author: "Robert Kiyosaki", cat: "success" },
+  { text: "If you want to make a permanent change, stop focusing on the size of your problems.", author: "T. Harv Eker", cat: "success" },
+  { text: "You can't build a reputation on what you are going to do.", author: "Henry Ford", cat: "success" },
+  { text: "The first step toward success is taken when you refuse to be a captive of the environment in which you first find yourself.", author: "Mark Caine", cat: "success" },
+  { text: "People rarely succeed unless they have fun in what they are doing.", author: "Dale Carnegie", cat: "success" },
+  { text: "There is no chance, no destiny, no fate, that can hinder or control the firm resolve of a determined soul.", author: "Ella Wheeler Wilcox", cat: "success" },
+  { text: "Develop success from failures. Discouragement and failure are two of the surest stepping stones to success.", author: "Dale Carnegie", cat: "success" },
+  { text: "If you don't design your own life plan, chances are you'll fall into someone else's plan.", author: "Jim Rohn", cat: "success" },
+  { text: "If you want to achieve excellence, you can get there today. As of this second, quit doing less-than-excellent work.", author: "Thomas J. Watson", cat: "success" },
+  { text: "All progress takes place outside the comfort zone.", author: "Michael John Bobak", cat: "success" },
+  { text: "You may only succeed if you desire succeeding; you may only fail if you do not mind failing.", author: "Philippos", cat: "success" },
+  { text: "Courage is resistance to fear, mastery of fear — not absence of fear.", author: "Mark Twain", cat: "success" },
+  { text: "Only put off until tomorrow what you are willing to die having left undone.", author: "Pablo Picasso", cat: "success" },
+  { text: "We become what we think about most of the time, and that's the strangest secret.", author: "Earl Nightingale", cat: "success" },
+  { text: "The real opportunity for success lies within the person and not in the job.", author: "Zig Ziglar", cat: "success" },
+  { text: "The difference between a successful person and others is not a lack of strength, not a lack of knowledge, but rather a lack of will.", author: "Vince Lombardi", cat: "success" },
+  { text: "It's not about how bad you want it. It's about how hard you're willing to work for it.", author: "Unknown", cat: "success" },
+  { text: "Successful people do what unsuccessful people are not willing to do.", author: "Jim Rohn", cat: "success" },
+  { text: "The only place where success comes before work is in the dictionary.", author: "Vidal Sassoon", cat: "success" },
+  { text: "Formula for success: rise early, work hard, strike oil.", author: "J. Paul Getty", cat: "success" },
+  { text: "I never dreamed about success. I worked for it.", author: "Estee Lauder", cat: "success" },
+  { text: "Success is liking yourself, liking what you do, and liking how you do it.", author: "Maya Angelou", cat: "success" },
+
+  // WISDOM (50 quotes)
+  { text: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci", cat: "wisdom" },
+  { text: "Knowing yourself is the beginning of all wisdom.", author: "Aristotle", cat: "wisdom" },
+  { text: "The journey of a thousand miles begins with one step.", author: "Lao Tzu", cat: "wisdom" },
+  { text: "In the middle of every difficulty lies opportunity.", author: "Albert Einstein", cat: "wisdom" },
+  { text: "The only true wisdom is in knowing you know nothing.", author: "Socrates", cat: "wisdom" },
+  { text: "The unexamined life is not worth living.", author: "Socrates", cat: "wisdom" },
+  { text: "Turning your wounds into wisdom.", author: "Oprah Winfrey", cat: "wisdom" },
+  { text: "The wise man does not lay up his own treasures. The more he gives to others, the more he has for his own.", author: "Lao Tzu", cat: "wisdom" },
+  { text: "It is a wise man who knows where courage ends and stupidity begins.", author: "Jerome Cady", cat: "wisdom" },
+  { text: "By three methods we may learn wisdom: First, by reflection, which is noblest; Second, by imitation, which is easiest; and Third by experience, which is the bitterest.", author: "Confucius", cat: "wisdom" },
+  { text: "A smart man makes a mistake, learns from it, and never makes that mistake again.", author: "Roy H. Williams", cat: "wisdom" },
+  { text: "Yesterday I was clever, so I wanted to change the world. Today I am wise, so I am changing myself.", author: "Rumi", cat: "wisdom" },
+  { text: "Count your age by friends, not years. Count your life by smiles, not tears.", author: "John Lennon", cat: "wisdom" },
+  { text: "A fool thinks himself to be wise, but a wise man knows himself to be a fool.", author: "William Shakespeare", cat: "wisdom" },
+  { text: "The measure of intelligence is the ability to change.", author: "Albert Einstein", cat: "wisdom" },
+  { text: "Any fool can know. The point is to understand.", author: "Albert Einstein", cat: "wisdom" },
+  { text: "It's not that I'm so smart, it's just that I stay with problems longer.", author: "Albert Einstein", cat: "wisdom" },
+  { text: "No man was ever wise by chance.", author: "Lucius Annaeus Seneca", cat: "wisdom" },
+  { text: "Wisdom is the reward you get for a lifetime of listening when you'd have preferred to talk.", author: "Doug Larson", cat: "wisdom" },
+  { text: "Keep me away from the wisdom which does not cry, the philosophy which does not laugh.", author: "Khalil Gibran", cat: "wisdom" },
+  { text: "The more I read, the more I acquire, the more certain I am that I know nothing.", author: "Voltaire", cat: "wisdom" },
+  { text: "Wonder is the beginning of wisdom.", author: "Socrates", cat: "wisdom" },
+  { text: "Even strength must bow to wisdom sometimes.", author: "Rick Riordan", cat: "wisdom" },
+  { text: "The wisest mind has something yet to learn.", author: "George Santayana", cat: "wisdom" },
+  { text: "A man is not called wise because he talks and talks again; but if he is peaceful, loving and fearless then he is in truth called wise.", author: "Buddha", cat: "wisdom" },
+  { text: "The pessimist complains about the wind. The optimist expects it to change. The leader adjusts the sails.", author: "John Maxwell", cat: "wisdom" },
+  { text: "Wisdom is not a product of schooling but of the lifelong attempt to acquire it.", author: "Albert Einstein", cat: "wisdom" },
+  { text: "Self-knowledge is the beginning of self-improvement.", author: "Baltasar Gracian", cat: "wisdom" },
+  { text: "The wise are instructed by reason, average minds by experience, the stupid by necessity and the brute by instinct.", author: "Marcus Tullius Cicero", cat: "wisdom" },
+  { text: "The more that you read, the more things you will know.", author: "Dr. Seuss", cat: "wisdom" },
+  { text: "Science is organized knowledge. Wisdom is organized life.", author: "Immanuel Kant", cat: "wisdom" },
+  { text: "Patience is the companion of wisdom.", author: "Saint Augustine", cat: "wisdom" },
+  { text: "He who learns but does not think, is lost! He who thinks but does not learn is in great danger.", author: "Confucius", cat: "wisdom" },
+  { text: "Knowledge speaks, but wisdom listens.", author: "Jimi Hendrix", cat: "wisdom" },
+  { text: "Turn your wounds into wisdom.", author: "Oprah Winfrey", cat: "wisdom" },
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", cat: "wisdom" },
+  { text: "Intelligence is the ability to adapt to change.", author: "Stephen Hawking", cat: "wisdom" },
+  { text: "The truth is rarely pure and never simple.", author: "Oscar Wilde", cat: "wisdom" },
+  { text: "Have the courage to follow your heart and intuition.", author: "Steve Jobs", cat: "wisdom" },
+  { text: "Real knowledge is to know the extent of one's ignorance.", author: "Confucius", cat: "wisdom" },
+  { text: "To conquer fear is the beginning of wisdom.", author: "Bertrand Russell", cat: "wisdom" },
+  { text: "Adopt the pace of nature: her secret is patience.", author: "Ralph Waldo Emerson", cat: "wisdom" },
+  { text: "Common sense is not so common.", author: "Voltaire", cat: "wisdom" },
+  { text: "Opinion is the medium between knowledge and ignorance.", author: "Plato", cat: "wisdom" },
+  { text: "Wisdom begins in wonder.", author: "Socrates", cat: "wisdom" },
+  { text: "To acquire knowledge, one must study; but to acquire wisdom, one must observe.", author: "Marilyn vos Savant", cat: "wisdom" },
+  { text: "The world is full of willing people; some willing to work, the rest willing to let them.", author: "Robert Frost", cat: "wisdom" },
+  { text: "Give me six hours to chop down a tree and I will spend the first four sharpening the axe.", author: "Abraham Lincoln", cat: "wisdom" },
+  { text: "It is not enough to have a good mind; the main thing is to use it well.", author: "Rene Descartes", cat: "wisdom" },
+  { text: "Without deviation from the norm, progress is not possible.", author: "Frank Zappa", cat: "wisdom" },
+  { text: "A clever person solves a problem. A wise person avoids it.", author: "Albert Einstein", cat: "wisdom" }
+];
+
+let lastIndex = -1;
+let currentCategory = 'all';
+let currentQuote = null;
+let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+let isLight = false;
+let showingFav = false;
+
+function getFiltered() {
+  if (currentCategory === 'all') return quotes;
+  return quotes.filter(q => q.cat === currentCategory);
+}
+
+function showQuote() {
+  const filtered = getFiltered();
+  const card = document.getElementById('card');
+  card.classList.add('fade');
+  setTimeout(() => {
+    let idx;
+    do { idx = Math.floor(Math.random() * filtered.length); }
+    while (filtered.length > 1 && idx === lastIndex);
+    lastIndex = idx;
+    currentQuote = filtered[idx];
+    document.getElementById('quoteText').textContent = currentQuote.text;
+    document.getElementById('quoteAuthor').textContent = '— ' + currentQuote.author;
+    document.getElementById('quoteCat').textContent = currentQuote.cat.toUpperCase();
+    const isFaved = favorites.some(f => f.text === currentQuote.text);
+    document.getElementById('favBtn').textContent = isFaved ? '❤️' : '🤍';
+    document.getElementById('counter').textContent = `Showing from ${filtered.length} quotes`;
+    card.classList.remove('fade');
+  }, 350);
+}
+
+function setCategory(cat, el) {
+  currentCategory = cat;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  lastIndex = -1;
+  showQuote();
+}
+
+function toggleFavorite() {
+  if (!currentQuote) return;
+  const idx = favorites.findIndex(f => f.text === currentQuote.text);
+  if (idx === -1) {
+    favorites.push(currentQuote);
+    document.getElementById('favBtn').textContent = '❤️';
+    showToast('Added to favorites ❤️');
+  } else {
+    favorites.splice(idx, 1);
+    document.getElementById('favBtn').textContent = '🤍';
+    showToast('Removed from favorites');
+  }
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+}
+
+function toggleFav() {
+  showingFav = !showingFav;
+  document.getElementById('mainView').style.display = showingFav ? 'none' : 'flex';
+  const panel = document.getElementById('favPanel');
+  panel.classList.toggle('open', showingFav);
+  if (showingFav) renderFavs();
+}
+
+function renderFavs() {
+  const list = document.getElementById('favList');
+  if (favorites.length === 0) {
+    list.innerHTML = '<p class="empty-msg">No favorites yet. Tap 🤍 on a quote to save it!</p>';
+    return;
+  }
+  list.innerHTML = favorites.map((f, i) => `
+    <div class="fav-item">
+      <div>
+        <p>"${f.text}"</p>
+        <span>— ${f.author}</span>
+      </div>
+      <button class="remove-btn" onclick="removeFav(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFav(i) {
+  favorites.splice(i, 1);
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+  renderFavs();
+}
+
+function shareQuote() {
+  if (!currentQuote) return;
+  const text = `"${currentQuote.text}" — ${currentQuote.author}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Quote', text });
+  } else {
+    navigator.clipboard.writeText(text);
+    showToast('Quote copied to clipboard! 📋');
+  }
+}
+
+function copyQuote() {
+  if (!currentQuote) return;
+  const text = `"${currentQuote.text}" — ${currentQuote.author}`;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied! 📋'));
+}
+
+function toggleTheme() {
+  isLight = !isLight;
+  document.body.classList.toggle('light', isLight);
+  document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+showQuote();
+</script>
+</body>
+</html>
