@@ -15,7 +15,7 @@ A web app that displays random inspirational quotes.
 - JavaScript
 
 ## Live Demo
-https://aniruddhasutradher07.github.io/random-quote-generator
+ https://aniruddhasutradher07-commits.github.io/-random-quote-generator/
 
 ## Made By
 ANIRUDDHA SUTRADHAR
